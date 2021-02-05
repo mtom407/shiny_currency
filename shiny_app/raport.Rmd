@@ -1,0 +1,196 @@
+---
+title: "Exchange rates"
+output: 
+  html_document:
+    self_contained: no
+---
+
+# Introduction
+
+This is a report showing tabular and graphical comparison of the two selected currencies
+
+```{r echo=FALSE, eval=TRUE, cache=FALSE, warning=FALSE, message=FALSE}
+
+library(yaml)
+library(knitr)
+library(reshape)
+library(ggplot2)
+library(plotly)
+library(DT)
+library(googleVis)
+
+source("data_loader.r")
+comparisonFrame = cF
+seriesHelperFrame = sHF
+mapHelperFrame = mHF
+
+
+```
+
+# Comparison table of `r params$curr1` & `r params$curr2`
+
+```{r , results='asis', echo=F, cache=FALSE, warning=FALSE, message=FALSE}
+
+tmpTab <- gvisTable(comparisonFrame, options=list(width = 900, height= 400))
+
+print(tmpTab,"chart")
+
+```
+
+# Elements of visual comparoson of `r params$curr1` & `r params$curr2`
+
+## Map
+
+```{r , results='asis', echo=F, cache=FALSE, warning=FALSE, message=FALSE}
+
+img <- gvisGeoChart(mapHelperFrame, locationvar="Entity", colorvar="CurrNo",
+                     hovervar="Info",
+                     options=list(projection="kavrayskiy-vii",width=800,height=800,
+                                  colors="['#000000', '#FFD700']"))
+
+print(img, "chart")
+
+```
+
+
+## Time series
+
+```{r , results='asis', echo=F, cache=FALSE, warning=FALSE, message=FALSE}
+
+img <- gvisLineChart(seriesHelperFrame, xvar="data",
+                              options=list(width=800, height=800,
+                                           colors="['#000000', '#FFD700']",
+                                           title="Time series of selected currencies", 
+                                           vAxis="{title:'Rate'}",
+                                           hAxis="{title:'Date'}"))
+
+print(img, "chart")
+
+```
+
+## Barplot of currency differences
+
+```{r , results='asis', echo=F, cache=FALSE, warning=FALSE, message=FALSE}
+
+if (params$curr1 != params$curr2) {
+  
+  df <- comparisonFrame
+  df$difference = unlist(abs(df[2] - df[3]))
+  
+  img <- (
+    ggplot(df, mapping = aes(x = difference)) +
+    geom_histogram(color="#000000", fill="#FFD700") +
+    ggtitle("Barplot of currency differences") + 
+    xlab("Difference") + ylab("Frequency")
+  )
+  
+  print(img)
+  
+} else {
+  
+  print("Currencies are duplicated. The plot will not be shown.")
+  
+}
+
+```
+
+## Scatterplot of selected currencies
+
+```{r , results='asis', echo=F, cache=FALSE, warning=FALSE, message=FALSE}
+
+if (params$curr1 != params$curr2) {
+
+  df <- comparisonFrame
+  img <- (
+      ggplot(df, mapping = aes_string(x = names(df)[2], y = names(df)[3])) +
+      geom_point() +
+      scale_fill_manual(values=c('#000000','#FFD700')) + 
+      ggtitle("Scatterplot of selected currencies") + 
+      xlab(names(df)[2]) + ylab(names(df)[3])
+  )
+  
+  print(img)
+
+} else {
+  
+  print("Currencies are duplicated. The plot will not be shown.")
+  
+}
+
+```
+
+# Linear regression of `r params$curr1` & `r params$curr2`
+
+**Stats and model summary.**:
+
+```{r, results='asis', echo=F, eval=T, cache=FALSE, warning=FALSE, message=FALSE}
+
+if (params$rflag) {
+  
+  
+  if(nrow(comparisonFrame) && params$curr1 != params$curr2){
+  
+    df <- comparisonFrame
+    colnames(df) <- c("data", "x", "y") 
+    
+    regressionModel = lm(formula = x ~ y, data = df)
+    model_summary <- capture.output(summary(regressionModel))
+    
+    print(model_summary)
+    
+  } 
+} 
+
+```
+
+**Rainbow test**:
+
+```{r, results='asis', echo=F, eval=T, cache=FALSE, warning=FALSE, message=FALSE}
+
+if (params$rflag) {
+  
+  
+  if(nrow(comparisonFrame) && params$curr1 != params$curr2){
+  
+    df <- comparisonFrame
+    colnames(df) <- c("data", "x", "y") 
+    
+    regressionModel = lm(formula = x ~ y, data = df)
+    
+    rtest <- raintest(regressionModel)
+      
+    cat("Statistic: ", rtest$statistic, "  \n")
+    cat("Parameters (df1 & df2): ", rtest$parameter, "  \n")
+    cat("p-value < ", rtest$p.value, "  \n")
+  }
+}
+```
+
+```{r , results='asis', echo=F, cache=FALSE, warning=FALSE, message=FALSE}
+
+if (params$rflag) {
+  
+  
+  if(nrow(comparisonFrame) && params$curr1 != params$curr2){
+
+    img <- (
+                      ggplot(df, mapping = aes_string(x = names(df)[2], y = names(df)[3]))
+                      + geom_point()
+                      + geom_smooth(method='lm',formula=y~x, colour="#FFD700") 
+                      + ggtitle("Regression model - graphical representation") 
+                      + xlab(params$curr1) + ylab(params$curr2)
+                  )
+    print(img)
+  
+  } else {
+    
+    print("Error while making the model. Currencies are duplicated.")
+    
+  }
+} else {
+  
+  print("The option to create the model has not been activated.")
+  
+}
+
+```

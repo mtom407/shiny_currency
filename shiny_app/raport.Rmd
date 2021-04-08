@@ -37,7 +37,7 @@ print(tmpTab,"chart")
 
 ```
 
-# Elements of visual comparoson of `r params$curr1` & `r params$curr2`
+# Elements of visual comparison of `r params$curr1` & `r params$curr2`
 
 ## Map
 

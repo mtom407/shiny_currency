@@ -79,7 +79,7 @@ shinyServer(function(input, output) {
                     try({
                         if(file.exists(fileName) && as.Date(file.info(fileName)$mtime)==Sys.Date()){
                             # Local loading block
-                            cat(paste("Reading data from local file\n"))
+                            #cat(paste("Reading data from local file\n"))
                             ret <- read.table(file=fileName,sep=";",dec=",",header=T,stringsAsFactor=F)
                             big_ret <- bind_rows(big_ret, ret)
                         } else {
@@ -368,15 +368,13 @@ shinyServer(function(input, output) {
         
         content = function(file) {
             
-            # create everything that need to be passed to the rmd
+            # create everything that needs to be passed to the rmd
             regression_flag = w$dataRegressionBuilder
             misc_df = data.frame("curr1" = input$currency1, "curr2" = input$currency2,
                                  "rflag" = regression_flag)
-
             cF = comparisonFrame()
             mHF = mapHelperFrame()
             sHF = seriesHelperFrame()
-            
             
             # EVERYTHING NEEDED FOR INTERACTIVE REPORTING HAS TO BE SAVED FIRST 
             # yamls work if interactivity can be sacrificed
@@ -389,26 +387,8 @@ shinyServer(function(input, output) {
             #yaml_shf <- as.yaml(seriesHelperFrame())
             write.table(sHF,file="seriesHelperFrame.csv",sep=";",dec=",",row.names=F)
             
-            
             tempReport <- file.path(tempdir(), "raport.Rmd")
             file.copy("raport.Rmd", tempReport, overwrite = TRUE)
-            
-          
-            # GVIS doesn't work this way
-            # out <- rmarkdown::render(tempReport,
-            #                          output_file = file,
-            #                          params = list(curr1 = input$currency1,
-            #                                        curr2 = input$currency2,
-            #                                        data = yaml_data,
-            #                                        comparison = yaml_cf,
-            #                                        map = yaml_mhf,
-            #                                        series = yaml_shf,
-            #                                        rflag = regression_flag),
-            #                          envir = new.env(parent = globalenv()),
-            #                          output_format = html_document()
-            #                          )
-            # 
-            
             
             knit(input="raport.Rmd", output="tmp.md")
             # Convert to HTML

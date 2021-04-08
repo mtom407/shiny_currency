@@ -6,4 +6,8 @@ Data source: Narodowy Bank Polski
 
 You can run the project by running "project.r" while being in the directory where this file is located.
 
+App showcase:
+
+![show_gif](https://github.com/mtom407/shiny_currency/blob/main/shiny_curr_showcase.gif)
+
 
